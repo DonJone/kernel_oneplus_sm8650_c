@@ -220,26 +220,85 @@ jobs:
           cd kernel_workspace
           ./kernel_platform/oplus/build/oplus_build_kernel.sh ${{ github.event.inputs.CPUD }} gki
 
-      - name: Make AnyKernel3
-        run: |
-          git clone https://github.com/Kernel-SU/AnyKernel3 --depth=1
-          rm -rf ./AnyKernel3/.git
-          cp kernel_workspace/kernel_platform/out/arch/arm64/boot/Image ./AnyKernel3/
-          cp kernel_workspace/kernel_platform/out/arch/arm64/boot/Image ./kernel_workspace/kernel
-
-      - name: Get current date and time
-        id: date
-        run: |
-          echo "CURRENT_TIMESTAMP=$(date +'%Y-%m-%d_%H-%M-%S')" >> $GITHUB_ENV
-          echo "BUILD_DIR=$(pwd)" >> $GITHUB_ENV
-          echo "ROOT_DIR_PREFIX=OnePlus_Kernel" >> $GITHUB_ENV
-
-      - name: Zip AnyKernel3
-        run: |
-          cd AnyKernel3
-          zip -r ../AnyKernel3-output_${{ env.KSUVER }}_${{ github.event.inputs.FEIL }}_${{ github.event.inputs.CPUD }}_${{ env.CURRENT_TIMESTAMP }}.zip *
-          cd ..
-          echo "zip_name=$(basename ../AnyKernel3-output_${{ env.KSUVER }}_${{ github.event.inputs.FEIL }}_${{ github.event.inputs.CPUD }}_${{ env.CURRENT_TIMESTAMP }}.zip)" >> $GITHUB_ENV
+            - name: Prepare and Package AnyKernel3
+              run: |
+                # --- Clone AnyKernel3 and remove Git history ---
+                echo "Cloning AnyKernel3..."
+                git clone https://github.com/Kernel-SU/AnyKernel3 --depth=1 AnyKernel3_Temp
+                # Move contents to avoid issues if AnyKernel3 dir exists, then clean up
+                mv AnyKernel3_Temp/* AnyKernel3_Temp/.git* AnyKernel3/
+                rm -rf AnyKernel3_Temp
+      
+                # --- Copy Kernel Image ---
+                echo "Copying kernel Image..."
+                cp kernel_workspace/kernel_platform/out/arch/arm64/boot/Image AnyKernel3/
+                # Also copy the Image to the other location if you still need it
+                cp kernel_workspace/kernel_platform/out/arch/arm64/boot/Image ./kernel_workspace/kernel
+      
+                # --- Determine Kernel Module Source Path ---
+                # Finds the directory like 'Kernel_Prebuilts/lib/modules/6.1.131'
+                KMOD_SOURCE_DIR=$(ls -d kernel_workspace/kernel_platform/Kernel_Prebuilts/lib/modules/* | head -n 1)
+                if [ -z "$KMOD_SOURCE_DIR" ]; then
+                  echo "::error::Could not find kernel module directory in kernel_workspace/kernel_platform/Kernel_Prebuilts/lib/modules/"
+                  exit 1
+                fi
+                echo "Using kernel module source directory: $KMOD_SOURCE_DIR"
+      
+                # --- Define AnyKernel3 Module Target Path ---
+                # !! IMPORTANT !!: Verify this path is correct for OnePlus 12 / sm8650 / your ROM.
+                # Common locations: modules/vendor_dlkm/lib/modules OR modules/vendor/lib/modules
+                # Check a working kernel zip for your device to confirm. This is a likely path:
+                AK3_MOD_TARGET_DIR="AnyKernel3/modules/vendor_dlkm/lib/modules"
+                echo "Targeting AnyKernel3 module path: $AK3_MOD_TARGET_DIR"
+      
+                # --- Create Module Directories in AnyKernel3 ---
+                echo "Creating module target directories..."
+                mkdir -p "$AK3_MOD_TARGET_DIR"
+      
+                # --- Copy Kernel Modules ---
+                echo "Copying modules from $KMOD_SOURCE_DIR to $AK3_MOD_TARGET_DIR ..."
+                # Use 'cp -a' to preserve permissions and follow symlinks if modules_install created them
+                cp -a "$KMOD_SOURCE_DIR"/* "$AK3_MOD_TARGET_DIR/"
+                if [ -z "$(ls -A $AK3_MOD_TARGET_DIR)" ]; then
+                   echo "::error::Failed to copy modules. Target directory $AK3_MOD_TARGET_DIR is empty."
+                   exit 1
+                fi
+                echo "Modules copied."
+      
+                # --- Clean up unnecessary files/symlinks within AnyKernel3 modules ---
+                echo "Cleaning up unnecessary files/symlinks in module target directory..."
+                find "$AK3_MOD_TARGET_DIR" -name '*.order' -delete || echo "No *.order files found."
+                find "$AK3_MOD_TARGET_DIR" -name '*.builtin' -delete || echo "No *.builtin files found."
+                find "$AK3_MOD_TARGET_DIR" -name 'modules.builtin.modinfo' -delete || echo "No modules.builtin.modinfo found."
+                find "$AK3_MOD_TARGET_DIR" -name 'modules.builtin.alias.bin' -delete || echo "No modules.builtin.alias.bin found."
+                find "$AK3_MOD_TARGET_DIR" -name 'modules.builtin.bin' -delete || echo "No modules.builtin.bin found."
+                find "$AK3_MOD_TARGET_DIR" -name 'source' -type l -delete || echo "No 'source' symlink found."
+                find "$AK3_MOD_TARGET_DIR" -name 'build' -type l -delete || echo "No 'build' symlink found."
+                echo "Module cleanup complete."
+      
+                # --- Set up Zip Name ---
+                # Use the environment variables you set earlier
+                ZIP_FILENAME="AnyKernel3-output_${KSUVER}_${CONFIG_NAME:-default}_pineapple_${CURRENT_TIMESTAMP}.zip" # Adjust config name if needed
+                echo "ZIP_FILENAME=${ZIP_FILENAME}" >> $GITHUB_ENV
+                echo "Final zip name will be: ${ZIP_FILENAME}"
+      
+                # --- Create the Zip File ---
+                echo "Creating zip file: ${ZIP_FILENAME}..."
+                cd AnyKernel3
+                # Exclude git files, MacOS specific files, etc.
+                zip -r9 "../${ZIP_FILENAME}" * -x ".git*" -x "LICENSE" -x "README.md" -x "*.zip"
+                cd ..
+                echo "Zip file created."
+      
+                # --- Verify Zip Contents (Optional but Recommended) ---
+                echo "Listing contents of ${ZIP_FILENAME}..."
+                unzip -l "${ZIP_FILENAME}" | grep -E '(Image|modules/.*\.ko)' || echo "::warning::Could not verify Image or .ko files in zip listing."
+      
+              env: # Pass necessary env vars to this step
+                 KSUVER: ${{ env.KSUVER }}
+                 CURRENT_TIMESTAMP: ${{ env.CURRENT_TIMESTAMP }}
+                 # Add CONFIG_NAME if you have one, e.g., CONFIG_NAME: default
+              working-directory: ${{ github.workspace }}
 
 
       - name: Create Release
