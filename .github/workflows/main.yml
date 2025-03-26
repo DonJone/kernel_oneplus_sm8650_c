@@ -91,8 +91,6 @@ jobs:
         run: |
           mkdir kernel_workspace && cd kernel_workspace
           git clone https://github.com/cabagekiller/kernel_oneplus_sm8650.git -b fifteen kernel_platform
-          rm kernel_platform/android/abi_gki_protected_exports_* || echo "No protected exports!"
-          rm kernel_platform/msm-kernel/android/abi_gki_protected_exports_* || echo "No protected exports!"
           sed -i 's/ -dirty//g' kernel_platform/scripts/setlocalversion || true
 
       - name: KernelSU & MKSU-SKN version
@@ -207,8 +205,13 @@ jobs:
       - name: Build kernel
         if: github.event.inputs.CPU != 'sm8650'
         run: |
-          cd kernel_workspace
-          ./kernel_platform/build_with_bazel.py -t ${{ github.event.inputs.CPUD }} gki
+          cd kernel_workspace/kernel_platform
+          make ARCH=arm64 CC=clang LLVM=1 LLVM_IAS=1 -j$(nproc --all) O=out gki_defconfig vendor/pineapple_GKI.config vendor/oplus/pineapple_GKI.config vendor/oplus/waffle.config # Build the kernel config
+          make ARCH=arm64 CC=clang LLVM=1 LLVM_IAS=1 -j$(nproc --all) O=out # Build the kernel itself
+          make ARCH=arm64 CC=clang LLVM=1 LLVM_IAS=1 -j$(nproc --all) O=out modules_install INSTALL_MOD_PATH=./Kernel_Prebuilts # Save the kernel modules to out/Kernel_Prebuilts/lib/modules
+          make ARCH=arm64 CC=clang LLVM=1 LLVM_IAS=1 -j$(nproc --all) O=out install INSTALL_PATH=./Kernel_Prebuilts # Save the kernel image(s) and devicetrees to ./Kernel_Prebuilts/boot hopefully
+          make ARCH=arm64 CC=clang LLVM=1 LLVM_IAS=1 -j$(nproc --all) O=out headers_install INSTALL_HDR_PATH=./Kernel_Prebuilts/usr # Save the kernel headers to out/Kernel_Prebuilts/usr
+
 
       - name: Fallback build kernel
         if: github.event.inputs.CPU == 'sm8650'
@@ -220,8 +223,8 @@ jobs:
         run: |
           git clone https://github.com/Kernel-SU/AnyKernel3 --depth=1
           rm -rf ./AnyKernel3/.git
-          cp kernel_workspace/kernel_platform/out/msm-kernel-${{ github.event.inputs.CPUD }}-gki/dist/Image ./AnyKernel3/
-          cp kernel_workspace/kernel_platform/out/msm-kernel-${{ github.event.inputs.CPUD }}-gki/dist/Image ./kernel_workspace/kernel
+          cp kernel_workspace/kernel_platform/out/arch/arm64/boot/Image ./AnyKernel3/
+          cp kernel_workspace/kernel_platform/out/arch/arm64/boot/Image ./kernel_workspace/kernel
 
       - name: Get current date and time
         id: date
