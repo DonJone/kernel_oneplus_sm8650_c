@@ -214,14 +214,8 @@ jobs:
           make ARCH=arm64 CC=clang LLVM=1 LLVM_IAS=1 -j$(nproc --all) O=out headers_install INSTALL_HDR_PATH=./Kernel_Prebuilts/usr # Save the kernel headers to out/Kernel_Prebuilts/usr
 
 
-      - name: Fallback build kernel
-        if: github.event.inputs.CPU == 'sm8650'
+      - name: Prepare and Package AnyKernel3
         run: |
-          cd kernel_workspace
-          ./kernel_platform/oplus/build/oplus_build_kernel.sh ${{ github.event.inputs.CPUD }} gki
-
-            - name: Prepare and Package AnyKernel3
-              run: |
                 # --- Clone AnyKernel3 and remove Git history ---
                 echo "Cloning AnyKernel3..."
                 git clone https://github.com/Kernel-SU/AnyKernel3 --depth=1 AnyKernel3_Temp
@@ -294,11 +288,11 @@ jobs:
                 echo "Listing contents of ${ZIP_FILENAME}..."
                 unzip -l "${ZIP_FILENAME}" | grep -E '(Image|modules/.*\.ko)' || echo "::warning::Could not verify Image or .ko files in zip listing."
       
-              env: # Pass necessary env vars to this step
+        env: # Pass necessary env vars to this step
                  KSUVER: ${{ env.KSUVER }}
                  CURRENT_TIMESTAMP: ${{ env.CURRENT_TIMESTAMP }}
                  # Add CONFIG_NAME if you have one, e.g., CONFIG_NAME: default
-              working-directory: ${{ github.workspace }}
+        working-directory: ${{ github.workspace }}
 
 
       - name: Create Release
