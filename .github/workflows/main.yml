@@ -216,12 +216,13 @@ jobs:
 
       - name: Prepare and Package AnyKernel3
         run: |
-                # --- Clone AnyKernel3 and remove Git history ---
+                # --- Clone AnyKernel3 ---
                 echo "Cloning AnyKernel3..."
-                git clone https://github.com/Kernel-SU/AnyKernel3 --depth=1 AnyKernel3_Temp
-                # Move contents to avoid issues if AnyKernel3 dir exists, then clean up
-                mv AnyKernel3_Temp/* AnyKernel3_Temp/.git* AnyKernel3/
-                rm -rf AnyKernel3_Temp
+                # Clone directly into the desired directory name, removing the need for a temp dir and mv
+                git clone https://github.com/cabagekiller/AnyKernel3.git -b gki-2.0 --depth=1 AnyKernel3
+                
+                # Remove .git history immediately after cloning
+                rm -rf AnyKernel3/.git
       
                 # --- Copy Kernel Image ---
                 echo "Copying kernel Image..."
