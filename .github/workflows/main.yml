@@ -306,15 +306,22 @@ jobs:
         uses: softprops/action-gh-release@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # Pass other variables needed ONLY for the 'name' or 'body' if not set via $GITHUB_ENV earlier
+          # Example: ROOT_DIR_PREFIX: ${{ env.ROOT_DIR_PREFIX }}
         with:
-          files: ${{ env.BUILD_DIR }}/${{ env.zip_name }}
+          # Use the correct variable set by the previous step. Assumes file is in workspace root.
+          files: ${{ env.ZIP_FILENAME }}
+          # Ensure CURRENT_TIMESTAMP was set via $GITHUB_ENV in an earlier step
           tag_name: release-${{ env.CURRENT_TIMESTAMP }}
-          name: Release ${{ env.ROOT_DIR_PREFIX }} ${{ env.zip_name }}
+          # Use the correct ZIP_FILENAME in the release name too
+          name: Release ${{ env.ROOT_DIR_PREFIX }} ${{ env.ZIP_FILENAME }} # Make sure ROOT_DIR_PREFIX is set earlier too
           body: |
             Release for ${{ env.ROOT_DIR_PREFIX }} based on branch ${{ github.event.inputs.CPU }}.
-            KSU Version: ${{ env.KSUVER }}
+            KSU Version: ${{ env.KSUVER }} # Ensure KSUVER is set earlier
             Timestamp: ${{ env.CURRENT_TIMESTAMP }}
-            Config: ${{ github.event.inputs.FEIL }}
+            Config: ${{ github.event.inputs.FEIL }} # Ensure FEIL is a valid input name
             Device: ${{ github.event.inputs.CPUD }}
-          draft: false #  Publish the release immediately
+          draft: false
           prerelease: false
+        # Add a condition to prevent running if essential variables are missing
+        if: success() && env.CURRENT_TIMESTAMP != '' && env.ZIP_FILENAME != ''
