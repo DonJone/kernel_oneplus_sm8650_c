@@ -79,7 +79,7 @@ jobs:
       - name: Install dependencies
         run: |
           sudo apt update && sudo apt upgrade -y
-          sudo apt install -y python3 git curl lld llvm
+          sudo apt install -y python3 git curl lld llvm libelf-dev dwarves
 
       - name: Install repo tool
         run: |
