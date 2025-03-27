@@ -319,4 +319,4 @@ jobs:
           draft: false
           prerelease: false
         # Add a condition to prevent running if essential variables are missing
-        if: success() && env.CURRENT_TIMESTAMP != '' && env.ZIP_FILENAME != ''
+        if: always()
