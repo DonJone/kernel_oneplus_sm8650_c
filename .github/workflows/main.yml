@@ -232,7 +232,7 @@ jobs:
       
                 # --- Determine Kernel Module Source Path ---
                 # Finds the directory like 'Kernel_Prebuilts/lib/modules/6.1.131'
-                KMOD_SOURCE_DIR=$(ls -d kernel_workspace/kernel_platform/Kernel_Prebuilts/lib/modules/* | head -n 1)
+                KMOD_SOURCE_DIR=$(ls -d kernel_workspace/kernel_platform/out/Kernel_Prebuilts/lib/modules/* | head -n 1)
                 if [ -z "$KMOD_SOURCE_DIR" ]; then
                   echo "::error::Could not find kernel module directory in kernel_workspace/kernel_platform/Kernel_Prebuilts/lib/modules/"
                   exit 1
