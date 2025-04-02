@@ -255,6 +255,12 @@ jobs:
           # CONFIG_NAME: default # Example if needed
         working-directory: ${{ github.workspace }}
 
+      - name: Upload AnyKernel3
+        uses: actions/upload-artifact@v4
+        with:
+         name: AnyKernel3_KernelSU_${{ env.KSUVER }}_${{ github.event.inputs.FEIL }}
+         path: ./AnyKernel3/*
+
       - name: Create Release
         id: create_release
         uses: softprops/action-gh-release@v1
