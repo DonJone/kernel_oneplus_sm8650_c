@@ -186,7 +186,7 @@ jobs:
 
 
           # Remove defconfig check
-          sed -i 's/check_defconfig//' ./build.config.gki
+          sed -i '2s/check_defconfig//' ./build.config.gki
 
       - name: Add make name
         run: |
