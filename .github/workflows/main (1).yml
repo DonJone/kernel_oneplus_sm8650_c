@@ -90,7 +90,7 @@ jobs:
       - name: Initialize repo and sync
         run: |
           mkdir kernel_workspace && cd kernel_workspace
-          git clone https://github.com/yaap/kernel_oneplus_sm8650.git -b fifteen kernel_platform
+          https://github.com/yaap/kernel_oneplus_sm8650.git -b fifteen kernel_platform
           rm -rf kernel_platform/android/abi_gki_protected_exports_*
           sed -i 's/ -dirty//g' kernel_platform/scripts/setlocalversion || true
 
@@ -107,7 +107,7 @@ jobs:
         if: ${{ github.event.inputs.kernelsu_variant == 'KSU_Next' }}
         run: |
           cd kernel_workspace/kernel_platform
-          curl -LSs "https://raw.githubusercontent.com/ShirkNeko/KernelSU/main/kernel/setup.sh" | bash -s susfs-dev
+          curl -LSs "https://raw.githubusercontent.com/rifsxd/KernelSU-Next/next-susfs/kernel/setup.sh" | bash -s next-susfs-dev
           cd ./KernelSU-Next
           KSU_VERSION=$(expr $(/usr/bin/git rev-list --count HEAD) "+" 10200)
           echo "KSUVER=$KSU_VERSION" >> $GITHUB_ENV
@@ -118,7 +118,7 @@ jobs:
         run: |
           cd kernel_workspace
           git clone https://gitlab.com/simonpunk/susfs4ksu.git -b gki-${{ github.event.inputs.ANDROID_VERSION }}-${{ github.event.inputs.KERNEL_VERSION }}
-          git clone https://github.com/ShirkNeko/SukiSU_patch.git
+          git clone https://github.com/cabagekiller/kernel_patches.git
           cd kernel_platform
 
           # Copy SUSFS patches
@@ -134,7 +134,7 @@ jobs:
         if: ${{ github.event.inputs.SUSFS_ENABLED == 'true' }}
         run: |
           cd kernel_workspace/kernel_platform
-          cp ../SukiSU_patch/69_hide_stuff.patch ./
+          cp ../kernel_patches/69_hide_stuff.patch ./
           echo "正在打隐藏应用补丁"
           patch -p1 -F 3 < 69_hide_stuff.patch || true
 
@@ -143,25 +143,13 @@ jobs:
         run: |
           cd kernel_workspace/kernel_platform
           #cp ../kernel_patches/next/next_hooks.patch ./
-          cp ../SukiSU_patch/next/syscall64_hooks.patch ./
+          cp ../kernel_patches/next/syscall64_hooks.patch ./
           echo "正在打vfs补丁"
           patch -p1 -F 3 < syscall64_hooks.patch || true
           #patch -p1 -F 3 < next_hooks.patch || true
           echo "完成"
 
- # zram lz4kd
-          cp -r ../SukiSU_patch/other/lz4k/include/linux/* ./include/linux
-          cp -r ../SukiSU_patch/other/lz4k/lib/* ./lib
-          cp -r ../SukiSU_patchcd /other/lz4k/crypto/* ./crypto
-          cp ../SukiSU_patch/other/lz4k_patch/6.1/lz4kd.patch
-          patch -p1 -F 3 < lz4kd.patch || true
-          
       - name: Add SUSFS Configuration Settings
-        run: |
-          cd kernel_workspace/kernel_platform
-          # Add KSU configuration settings
-
-          - name: Add SUSFS Configuration Settings
         run: |
           cd kernel_workspace/kernel_platform
           # Add KSU configuration settings
@@ -186,10 +174,6 @@ jobs:
           echo "CONFIG_KSU_SUSFS_SUS_SU=n" >> ./arch/arm64/configs/gki_defconfig
           echo "CONFIG_KSU_WITH_KPROBES=n" >> ./arch/arm64/configs/gki_defconfig
           echo "CONFIG_COMPAT=y" >> ./arch/arm64/configs/gki_defconfig
-          echo "CONFIG_CRYPTO_LZ4K=y" >> ./arch/arm64/configs/gki_defconfig
-          echo "CONFIG_CRYPTO_LZ4KD=y" >> ./arch/arm64/configs/gki_defconfig
-          echo "CONFIG_CRYPTO_LZ4HC=y" >> ./arch/arm64/configs/gki_defconfig
-          echo "CONFIG_CRYPTO_842=y" >> ./arch/arm64/configs/gki_defconfig
           echo "CONFIG_KSU_VFS=y" >> ./arch/arm64/configs/gki_defconfig
           # Add additional tmpfs config setting
           echo "CONFIG_TMPFS_XATTR=y" >> ./arch/arm64/configs/gki_defconfig
@@ -202,7 +186,7 @@ jobs:
 
 
           # Remove defconfig check
-          sed -i 's/check_defconfig//' ./build.config.gki
+          sed -i '2s/check_defconfig//' ./build.config.gki
 
       - name: Add make name
         run: |
@@ -215,7 +199,7 @@ jobs:
 
           # Run sed commands for modifications
           sed -i 's/check_defconfig//' ./build.config.gki
-          sed -i '$s|echo "\$res"|echo "\$res-Cabage"|' ./scripts/setlocalversion
+          sed -i '$s|echo "\$res"|echo "\$res-Kim.Junun"|' ./scripts/setlocalversion
           sed -i 's/-dirty//' ./scripts/setlocalversion
 
 
