@@ -90,7 +90,7 @@ jobs:
       - name: Initialize repo and sync
         run: |
           mkdir kernel_workspace && cd kernel_workspace
-          git clone https://github.com/cabagekiller/kernel_oneplus_sm8650.git -b fifteen kernel_platform
+          git clone https://github.com/yaap/kernel_oneplus_sm8650.git -b fifteen kernel_platform
           rm -rf kernel_platform/android/abi_gki_protected_exports_*
           sed -i 's/ -dirty//g' kernel_platform/scripts/setlocalversion || true
 
@@ -117,7 +117,7 @@ jobs:
         if: ${{ (inputs.kernelsu_variant == 'KSU_Next') && github.event.inputs.SUSFS_ENABLED == 'true' }}
         run: |
           cd kernel_workspace
-          git clone --depth 1 https://gitlab.com/simonpunk/susfs4ksu.git -b gki-${{ github.event.inputs.ANDROID_VERSION }}-${{ github.event.inputs.KERNEL_VERSION }}
+          git clone https://gitlab.com/simonpunk/susfs4ksu.git -b gki-${{ github.event.inputs.ANDROID_VERSION }}-${{ github.event.inputs.KERNEL_VERSION }}
           git clone https://github.com/cabagekiller/kernel_patches.git
           cd kernel_platform
 
@@ -254,12 +254,6 @@ jobs:
           CURRENT_TIMESTAMP: ${{ env.CURRENT_TIMESTAMP }}
           # CONFIG_NAME: default # Example if needed
         working-directory: ${{ github.workspace }}
-
-      - name: Upload AnyKernel3
-        uses: actions/upload-artifact@v4
-        with:
-         name: AnyKernel3_KernelSU_${{ env.KSUVER }}_${{ github.event.inputs.FEIL }}
-         path: ./AnyKernel3/*
 
       - name: Create Release
         id: create_release
