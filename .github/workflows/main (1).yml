@@ -90,7 +90,7 @@ jobs:
       - name: Initialize repo and sync
         run: |
           mkdir kernel_workspace && cd kernel_workspace
-          git clone https://github.com/op12-evolution-x/kernel_oneplus_sm8650.git -b fifteen kernel_platform
+          git clone --depth 1 https://github.com/op12-evolution-x/kernel_oneplus_sm8650.git  -b fifteen kernel_platform
           rm -rf kernel_platform/android/abi_gki_protected_exports_*
           sed -i 's/ -dirty//g' kernel_platform/scripts/setlocalversion || true
 
@@ -107,11 +107,11 @@ jobs:
         if: ${{ github.event.inputs.kernelsu_variant == 'KSU_Next' }}
         run: |
           cd kernel_workspace/kernel_platform
-          curl -LSs "https://raw.githubusercontent.com/rifsxd/KernelSU-Next/next-susfs/kernel/setup.sh" | bash -s next-susfs-dev
-          cd ./KernelSU-Next
-          KSU_VERSION=$(expr $(/usr/bin/git rev-list --count HEAD) "+" 10200)
+          curl -LSs "https://raw.githubusercontent.com/ShirkNeko/KernelSU/main/kernel/setup.sh" | bash -s susfs-dev
+          cd ./KernelSU
+          KSU_VERSION=$(expr $(/usr/bin/git rev-list --count main) "+" 12606)
           echo "KSUVER=$KSU_VERSION" >> $GITHUB_ENV
-          sed -i "s/DKSU_VERSION=11998/DKSU_VERSION=${KSU_VERSION}/" kernel/Makefile
+          sed -i "s/DKSU_VERSION=16/DKSU_VERSION=${KSU_VERSION}/" kernel/Makefile
 
       - name: Apply SUSFS Patches MKSU-SKN
         if: ${{ (inputs.kernelsu_variant == 'KSU_Next') && github.event.inputs.SUSFS_ENABLED == 'true' }}
