@@ -1,6 +1,6 @@
           mkdir kernel_workspace && cd kernel_workspace
          # cp -a '/home/don/Music/kernel_workspace'  /home/don
-          git clone https://github.com/yaap/kernel_oneplus_sm8650.git -b fifteen kernel_platform
+          git clone --depth 1 https://github.com/op12-evolution-x/kernel_oneplus_sm8650.git  -b fifteen kernel_platform
           rm -rf kernel_platform/android/abi_gki_protected_exports_*
           sed -i 's/ -dirty//g' kernel_platform/scripts/setlocalversion || true
           cd kernel_platform
